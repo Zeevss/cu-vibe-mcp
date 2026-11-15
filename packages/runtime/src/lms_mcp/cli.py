@@ -1,6 +1,5 @@
 import argparse
 import asyncio
-import getpass
 import json
 import os
 import sys
@@ -21,20 +20,11 @@ async def run_command(args, config):
     store = SessionStore(config.data_dir)
     auth = AuthManager(store)
     if args.command == "login":
-        await auth.begin(args.browser, args.timeout)
-        previous = None
-        try:
-            while auth.busy():
-                status = auth.status()["login"]
-                if status["state"] != previous:
-                    print(status["message"], file=sys.stderr)
-                    previous = status["state"]
-                await asyncio.sleep(0.5)
-            result = auth.status()
-            output(result)
-            return 0 if result["login"]["state"] == "authenticated" else 1
-        finally:
-            await auth.close()
+        from .sso import interactive_login
+
+        result = interactive_login(store, args.timeout)
+        output({**auth.status(), "login": result})
+        return 0
     if args.command == "import-cookie":
         if args.file:
             path = Path(args.file).expanduser()
@@ -46,7 +36,9 @@ async def run_command(args, config):
             if len(text) > 1024 * 1024:
                 raise LMSError("Ввод превышает 1 МиБ")
         else:
-            text = getpass.getpass("Cookie (ввод скрыт): ")
+            from .sso import hidden_input
+
+            text = hidden_input("Cookie (ввод скрыт): ")
         output(await auth.import_cookies(parse_cookies(text, args.service), args.service))
     elif args.command == "status":
         result = auth.status()
@@ -63,6 +55,9 @@ async def run_command(args, config):
 
 
 def main():
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description="Local Central University LMS MCP (stdio)")
     sub = parser.add_subparsers(dest="command")
     serve = sub.add_parser("serve", help="Run local MCP over stdin/stdout (default)")
@@ -79,8 +74,7 @@ def main():
     sources.add_argument("--file")
     methods = sub.add_parser("methods", help="Print local method schemas")
     methods.add_argument("--name", action="append")
-    login = sub.add_parser("login", help="Open browser and capture the session after manual sign-in")
-    login.add_argument("--browser", default="auto")
+    login = sub.add_parser("login", help="Sign in to CU SSO in this terminal, without a browser")
     login.add_argument("--timeout", type=int, default=300)
     cookie = sub.add_parser("import-cookie", help="Import Cookie header, cookie JSON or Netscape file")
     source = cookie.add_mutually_exclusive_group()

@@ -251,7 +251,7 @@ wheels = [
 
 [[package]]
 name = "cu-lms-development"
-version = "0.3.0"
+version = "0.4.0"
 source = { virtual = "." }
 dependencies = [
     { name = "cu-lms-mcp" },
@@ -276,7 +276,7 @@ dev = [
 
 [[package]]
 name = "cu-lms-mcp"
-version = "0.3.0"
+version = "0.4.0"
 source = { editable = "packages/runtime" }
 dependencies = [
     { name = "beautifulsoup4" },

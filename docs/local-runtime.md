@@ -1,36 +1,22 @@
-# Локальный runtime и прежний stdio-режим
+# Локальный runtime и данные
 
 MCP-сервер для `my.centraluniversity.ru`, работающий на твоём компьютере через **stdio**. Реализованы курсы, ведомость, задания/сроки/LD, лонгриды, выгрузка файлов, результаты завершённых тестов и чтение силлабусов Note. Этот режим не открывает HTTP-порт. Основной вариант поставки — плагин из GitHub, описанный в корневом README.
 
-## Установка и запуск
+## Установка и SSO-вход
 
-Нужны Python 3.11+ и [uv](https://docs.astral.sh/uv/). Из каталога проекта:
+Из корня проекта на Windows, macOS или Linux:
 
-```bash
-uv sync --frozen
-uv run cu-lms-mcp browsers
-uv run cu-lms-mcp login --browser auto
-uv run cu-lms-mcp status --validate
+```text
+uv sync --project packages/runtime --frozen --no-dev
+uv run --project packages/runtime --frozen cu-lms-mcp login
+uv run --project packages/runtime --frozen cu-lms-mcp status --validate
 ```
 
-Зависимости зафиксированы в `uv.lock`. Браузеры детектируются в PATH и стандартных каталогах Linux, macOS и Windows. Режим `auto` сначала выбирает браузер с совместимым локальным драйвером; если такой пары нет — первый найденный браузер с подбором драйвера через Selenium Manager. Имена выбора: `auto`, `chrome`, `chromium`, `edge`, `brave`, `firefox`, `yandex`. Для Linux доступны также `google-chrome-stable`, `chromium-browser`, `firefox-esr` и другие распространённые имена бинарников.
+`login` читает шаги SSO ЦУ через HTTP и спрашивает email, пароль и код в локальном терминале со скрытым вводом. Браузер и WebDriver для входа не используются; `login --browser` удалён. `/resend` на шаге OTP запрашивает новый код; Ctrl+C отменяет попытку. CAPTCHA, восстановление пароля и настройка MFA требуют действий на сайте. Подробности и проверенные границы — [SSO](sso.md).
 
-Для браузера нужен WebDriver: `chromedriver`, `msedgedriver` или `geckodriver`. Для Chrome/Chromium/Edge проверяются версии браузера и драйвера. Если подходящего драйвера нет, Selenium Manager попробует скачать его с источников поставщика, игнорируя несовместимый драйвер в PATH. Системный драйвер удалять не нужно. Телеметрия Selenium Manager отключена. Для браузерного входа нужна графическая сессия на компьютере, где запущен MCP; по SSH/headless используй импорт cookie. Обнаружение Firefox/Edge и запуск WebDriver реализованы; физически в этой среде проверяется Chromium, остальные платформы требуют проверки на соответствующей ОС.
+В MCP `auth_login` возвращает инструкцию, а не запускает вход. После завершения CLI вызывается `auth_status(validate=true)`. MCP не принимает секреты и не управляет самостоятельным процессом CLI; `auth_cancel` объясняет, как отменить его локально. Папка `LMS_MCP_DATA_DIR` должна совпадать у CLI и MCP.
 
-## Вход через браузер
-
-```bash
-uv run cu-lms-mcp login --browser chromium --timeout 300
-```
-
-1. Сервер находит установленный браузер и открывает **новое отдельное окно с временным профилем**.
-2. Ты самостоятельно проходишь вход на портале, включая SSO/2FA.
-3. После возврата на портал сервер получает cookies только этого окна и проверяет их через `/api/micro-lms/students/me`.
-4. Рабочая сессия сохраняется локально, окно закрывается. Пароль и содержимое формы входа не перехватываются.
-
-Обычный профиль браузера и его база cookies не читаются. Вход в существующем окне портала не переносится автоматически в новый профиль.
-
-В MCP тот же процесс доступен через `auth_login`. Вызов возвращает сразу, далее `auth_status` показывает `opening`, `waiting_for_login`, `authenticated`, `expired`, `cancelled` или `failed`. `auth_cancel` отменяет ожидание. Таймаут 30–900 секунд отсчитывается после открытия страницы; первоначальная загрузка драйвера может занять дополнительное время.
+Selenium и поиск браузеров остаются только для `get_syllabus`: Note требует рендеринга. При проблемах выбери браузер параметром `browser` этого метода или настрой WebDriver. Браузеры/драйверы пользователя автоматически не изменяются.
 
 ## Вход через cookie
 
@@ -96,7 +82,7 @@ uv run cu-lms-mcp config
 | `get_dashboard` | Курсы, активные задания, LD и ведомость одним вызовом |
 | `batch` | До 20 методов за запуск с устранением повторных API-чтений |
 | `list_browsers` | Установленные браузеры и пути |
-| `auth_login`, `auth_status`, `auth_cancel` | Браузерный вход и состояние процесса |
+| `auth_login`, `auth_status`, `auth_cancel` | Инструкция локального SSO-входа, сессия и подсказка отмены |
 | `auth_import_cookie`, `auth_forget` | Импорт/удаление локальной сессии |
 | `list_courses` | Актуальные/архивные курсы, поиск, пагинация |
 | `get_course` | Темы, лонгриды, прогресс, ближайшие сроки, ссылки |
@@ -158,12 +144,11 @@ uv run cu-lms-mcp logout --service note
 uv sync --frozen
 uv run pytest -q
 uv run ruff check packages/runtime/src packages/runtime/tests
-LMS_MCP_BROWSER_TEST=1 uv run pytest -q packages/runtime/tests/test_browser_integration.py
 ```
 
-Последний тест запускает реальный установленный Chromium и локальный сайт-фикстуру на `127.0.0.1`. Он не обращается к вузу и не использует реальные пароли/cookies. Остальные тесты проверяют HTTP-контракты на фикстурах, границы дат, LD/null, ротацию сессии, изоляцию источников, выгрузку и настоящий обмен MCP по stdio.
+Тесты проверяют HTTP SSO на синтетических формах, границы дат, LD/null, ротацию сессии, изоляцию источников, выгрузку и настоящий обмен MCP по stdio. Реальные пароли/cookies не используются.
 
-Результат проверки реализации и границы live-проверки — в [docs/implementation.md](implementation.md).
+Исторические проверки прежней реализации — в [implementation.md](implementation.md), текущие границы SSO — в [sso.md](sso.md).
 
 ## Исследование портала
 
@@ -173,12 +158,6 @@ LMS_MCP_BROWSER_TEST=1 uv run pytest -q packages/runtime/tests/test_browser_inte
 
 Реализация опирается на [официальный MCP Python SDK v1](https://github.com/modelcontextprotocol/python-sdk/tree/v1.x), [Selenium cookies](https://www.selenium.dev/documentation/webdriver/interactions/cookies/) и [Selenium Manager](https://www.selenium.dev/documentation/selenium_manager/).
 
-## Если Chrome и chromedriver разных версий
+## Браузер для силлабусов Note
 
-Например, Chrome 152 и chromedriver 153 могут быть установлены одновременно с Chromium 153. `login` автоматически предпочтёт совместимую пару Chromium 153 + chromedriver 153. Можно явно выбрать её:
-
-```bash
-uv run cu-lms-mcp login --browser chromium
-```
-
-При `--browser chrome` сервер отдельно подберёт драйвер для Chrome 152, не меняя `/usr/bin/chromedriver`. Для первой загрузки нужен доступ к источнику драйверов. Команда `browsers` также показывает найденные версии браузеров.
+Только `get_syllabus` использует Selenium. Например, при несовместимых Chrome/chromedriver можно выбрать `get_syllabus(course_id=..., browser="chromium")`. Режим `auto` предпочитает совместимую пару. Если локального драйвера нет, Selenium Manager попытается загрузить подходящий, не меняя системные бинарники. Для первой загрузки нужен доступ к источнику драйверов. Команда `browsers` показывает найденные версии. Это не относится к новому `login`.

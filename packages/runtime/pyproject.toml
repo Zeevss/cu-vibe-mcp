@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cu-lms-mcp"
-version = "0.3.0"
+version = "0.4.0"
 description = "Local read-only MCP for Central University LMS"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -33,7 +33,6 @@ packages = ["src/lms_mcp"]
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 asyncio_default_fixture_loop_scope = "function"
-markers = ["browser: real local-browser integration, opt in with LMS_MCP_BROWSER_TEST=1"]
 testpaths = ["tests"]
 
 [tool.ruff]

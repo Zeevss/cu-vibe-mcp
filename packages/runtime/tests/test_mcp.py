@@ -21,7 +21,9 @@ async def test_tools_through_server_preserve_contract(make_client, tmp_path):
     assert {"get_dashboard", "batch"}.issubset({tool.name for tool in tools})
     by_name = {tool.name: tool for tool in tools}
     assert by_name["get_gradebook"].annotations.readOnlyHint is True
-    assert by_name["auth_login"].annotations.readOnlyHint is False
+    assert by_name["auth_login"].annotations.readOnlyHint is True
+    assert not by_name["auth_login"].inputSchema.get("properties")
+    assert by_name["auth_cancel"].annotations.readOnlyHint is True
     result = await server.call_tool("get_late_days", {})
     # SDK versions can return just blocks or (blocks, structuredContent).
     blocks = result[0] if isinstance(result, tuple) else result

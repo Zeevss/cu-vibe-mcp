@@ -1,4 +1,4 @@
-"""Only explicitly supplied cookies or cookies from our own login window are used."""
+"""Only explicitly supplied cookies or cookies from our own SSO flow are used."""
 
 import json
 import math

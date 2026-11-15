@@ -60,7 +60,7 @@ def test_failed_download_has_actionable_error_without_raw_details(installed, mon
     with pytest.raises(LMSError) as error:
         resolve_driver(installed[0])
     assert "chrome 152.0.7977.64" in str(error.value)
-    assert "--browser chromium" in str(error.value)
+    assert "browser=chromium" in str(error.value)
     assert "private URL" not in str(error.value)
 
 

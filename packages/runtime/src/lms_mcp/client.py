@@ -23,7 +23,7 @@ class LMSClient:
             cookies = self.store.get(service)
             if require_auth and not cookies:
                 raise AuthRequired(
-                    "Нужен вход: auth_login или cu-lms-mcp login; альтернатива — auth import-cookie"
+                    "Нужен вход: auth_login или cu-lms-mcp login; альтернатива — cu-lms-mcp import-cookie"
                 )
             async with httpx.AsyncClient(
                 base_url=ORIGINS[service],
@@ -37,7 +37,7 @@ class LMSClient:
                     async with client.stream("GET", path, params=params) as response:
                         if response.status_code in (301, 302, 303, 307, 308, 401):
                             raise AuthRequired(
-                                "Сессия истекла или не принята. Повторите браузерный вход/импорт cookie."
+                                "Сессия истекла или не принята. Выполните локальный cu-lms-mcp login или импорт cookie."
                             )
                         if response.status_code == 403:
                             raise LMSError("Доступ запрещён (403): проверьте права и актуальность сессии")

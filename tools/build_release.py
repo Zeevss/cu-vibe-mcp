@@ -37,6 +37,7 @@ def build(output, repository=None, revision=None):
         "README.md",
         "docs/chat-clients.md",
         "docs/distribution.md",
+        "docs/sso.md",
         "docs/local-runtime.md",
         "plugin.json",
         "mcp.json",

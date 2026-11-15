@@ -1,6 +1,6 @@
 {
   "name": "cu-lms",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Central University LMS: courses, grades, assignments and materials. Local execution.",
   "skills": "./skills/",
   "mcpServers": "./.mcp.json"

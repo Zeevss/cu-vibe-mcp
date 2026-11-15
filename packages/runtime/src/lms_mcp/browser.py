@@ -93,7 +93,7 @@ def resolve_driver(browser: Browser) -> str:
     if os.environ.get(overrides[browser.engine]):
         raise LMSError(
             f"Драйвер из {overrides[browser.engine]} не совместим с выбранным браузером. "
-            "Исправьте эту переменную или используйте login --browser chromium."
+            "Исправьте эту переменную или выберите browser=chromium в get_syllabus."
         )
     version = browser.version or binary_version(browser.path)
     args = [
@@ -126,8 +126,8 @@ def resolve_driver(browser: Browser) -> str:
     except Exception:
         raise LMSError(
             f"Не удалось получить совместимый драйвер для {browser.name} {version or ''}. "
-            "Проверьте доступ к загрузкам драйверов; попробуйте login --browser chromium "
-            "или импорт cookie. Драйвер в PATH менять или удалять не требуется."
+            "Проверьте доступ к загрузкам драйверов; выберите browser=chromium в get_syllabus "
+            "или настройте совместимый WebDriver. Драйвер в PATH менять или удалять не требуется."
         ) from None
 
 
