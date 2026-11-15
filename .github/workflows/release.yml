@@ -1,0 +1,55 @@
+name: Test and release
+on:
+  push:
+    branches: ['**']
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install uv==0.12.23
+      - run: uv sync --frozen
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pytest -q
+        env:
+          LMS_MCP_CHECK_UPDATES: '0'
+      - run: uv run python tools/smoke_release.py
+        env:
+          LMS_MCP_CHECK_UPDATES: '0'
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install uv==0.12.23
+      - run: uv sync --frozen
+      - name: Verify version and repository identity
+        run: |
+          uv run python - <<'PY'
+          import json, os, tomllib
+          from pathlib import Path
+          version = tomllib.loads(Path('packages/runtime/pyproject.toml').read_text())['project']['version']
+          assert os.environ['GITHUB_REF_NAME'] == 'v' + version, 'Tag must match package version'
+          info = json.loads(Path('packages/runtime/src/lms_mcp/repository.json').read_text())
+          assert info['repository'] == os.environ['GITHUB_REPOSITORY'], 'Run tools/configure_repository.py and commit before tagging'
+          PY
+      - run: uv run python tools/build_release.py --repository "$GITHUB_REPOSITORY" --revision "$GITHUB_SHA"
+      - name: Publish immutable release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" dist/release/*.zip dist/release/SHA256SUMS dist/release/release.json --verify-tag --generate-notes

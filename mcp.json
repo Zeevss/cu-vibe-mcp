@@ -1,0 +1,19 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
+  "mcpServers": {
+    "cu-lms": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "${PLUGIN_ROOT}/packages/runtime",
+        "--frozen",
+        "--no-dev",
+        "cu-lms-mcp",
+        "serve",
+        "--compact"
+      ]
+    }
+  }
+}

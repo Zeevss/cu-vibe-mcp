@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "cu-lms": {
+      "command": "/home/zevsus/Projects/LMS_MCP/.venv/bin/python",
+      "args": [
+        "-m",
+        "lms_mcp",
+        "serve"
+      ],
+      "env": {
+        "LMS_MCP_DATA_DIR": "/home/zevsus/.local/share/cu-lms-mcp"
+      }
+    }
+  }
+}

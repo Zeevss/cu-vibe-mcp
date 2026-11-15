@@ -1,0 +1,27 @@
+[project]
+name = "cu-lms-development"
+version = "0.3.0"
+requires-python = ">=3.11"
+dependencies = ["cu-lms-mcp"]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+cu-lms-mcp = { path = "packages/runtime", editable = true }
+
+[dependency-groups]
+dev = ["pytest>=8,<10", "pytest-asyncio>=0.25,<2", "ruff>=0.11,<1"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = ["browser: real local-browser integration, opt in with LMS_MCP_BROWSER_TEST=1"]
+testpaths = ["packages/runtime/tests", "tests/bootstrap"]
+
+[tool.ruff]
+line-length = 110
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = ["E501"]

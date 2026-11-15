@@ -1,0 +1,13 @@
+{
+  "name": "cu-lms",
+  "owner": {
+    "name": "CU LMS maintainers"
+  },
+  "plugins": [
+    {
+      "name": "cu-lms",
+      "source": "./",
+      "description": "Central University LMS: courses, grades, assignments and materials. Local execution."
+    }
+  ]
+}

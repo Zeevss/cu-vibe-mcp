@@ -1,0 +1,4 @@
+{
+  "name": "cu-lms",
+  "plugins": [{"name": "cu-lms", "source": {"source": "local", "path": "."}}]
+}

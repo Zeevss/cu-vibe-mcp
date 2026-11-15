@@ -1,0 +1,44 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "cu-lms-mcp"
+version = "0.3.0"
+description = "Local read-only MCP for Central University LMS"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "mcp>=1.23,<2",
+  "httpx>=0.28,<1",
+  "selenium>=4.27,<5",
+  "beautifulsoup4>=4.12,<5",
+  "markdownify>=1.1,<2",
+  "pypdf>=5,<7",
+  "platformdirs>=4,<5",
+  "filelock>=3.16,<4",
+  "tzdata>=2025.1",
+  "jsonschema>=4.23,<5",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<10", "pytest-asyncio>=0.25,<2", "ruff>=0.11,<1"]
+
+[project.scripts]
+cu-lms-mcp = "lms_mcp.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lms_mcp"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+markers = ["browser: real local-browser integration, opt in with LMS_MCP_BROWSER_TEST=1"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
+ignore = ["E501"]

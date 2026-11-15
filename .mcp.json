@@ -1,0 +1,18 @@
+{
+  "mcpServers": {
+    "cu-lms": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "${CLAUDE_PLUGIN_ROOT}/packages/runtime",
+        "--frozen",
+        "--no-dev",
+        "cu-lms-mcp",
+        "serve",
+        "--compact"
+      ]
+    }
+  }
+}
